@@ -1,5 +1,5 @@
 import React from 'react';
-import { Scale, AlertCircle, TrendingDown, DollarSign, ShieldAlert, ArrowRight, CheckCircle2, Sparkles } from 'lucide-react';
+import { Scale, AlertCircle, TrendingDown, DollarSign, ShieldAlert, ArrowRight, CheckCircle2, Sparkles, Layers } from 'lucide-react';
 import { CaseData, Finding } from '../types/tdv';
 import { calculateCaseScoreAndBand, calculateFindingExpectedLoss } from '../services/scoringEngine';
 
@@ -14,196 +14,176 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
 }) => {
   const { caseScore, riskBand, totalExpectedLoss, reducibleLoss } = calculateCaseScoreAndBand(activeCase.findings);
 
-  const getRiskBandBadge = (band: string) => {
+  const getRiskPip = (band: string) => {
     switch (band) {
-      case 'Critical': return 'badge-critical';
-      case 'High': return 'badge-high';
-      case 'Moderate': return 'badge-moderate';
-      default: return 'badge-low';
+      case 'Critical': return 'pip crit dot';
+      case 'High': return 'pip warn dot';
+      case 'Moderate': return 'pip info';
+      default: return 'pip ok';
     }
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-fade-in">
-      {/* Top Summary Header Banner */}
-      <div className="glass-panel p-6 border-l-4 border-l-rose-500 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div>
-          <div className="flex items-center gap-2 text-xs text-rose-400 font-semibold uppercase tracking-wider mb-1">
-            <Scale className="w-4 h-4" /> Capability F5 — Quantified Risk & Findings Dashboard
+    <div className="p-5 max-w-7xl mx-auto space-y-5 animate-fade-in">
+      {/* Hero Header Sub-Panel */}
+      <div className="sub border-l-4 border-l-[var(--signal)]">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="pip live dot">Capability F5</span>
+              <span className="mono text-xs text-[var(--ink-3)]">CASE CONSOLE: {activeCase.id}</span>
+            </div>
+            <h1 className="text-2xl font-extrabold text-[var(--ink)] tracking-tight">
+              {activeCase.title}
+            </h1>
+            <p className="text-[var(--ink-2)] text-xs mt-1">
+              Trade Class: <b className="text-[var(--ink)]">{activeCase.trade}</b> | Charter Type: <b className="text-[var(--ink)]">{activeCase.charterType}</b> | Effective Date: <b className="text-[var(--ink)] font-mono">{activeCase.effectiveDate}</b>
+            </p>
           </div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">
-            {activeCase.title}
-          </h2>
-          <p className="text-slate-400 text-sm mt-1">
-            Trade: <span className="text-slate-200 font-medium">{activeCase.trade}</span> | Charter Type: <span className="text-slate-200 font-medium">{activeCase.charterType}</span> | Effective: <span className="text-slate-200 font-medium">{activeCase.effectiveDate}</span>
-          </p>
-        </div>
 
-        <button
-          onClick={() => onNavigateToSmeReview()}
-          className="btn btn-primary px-6 py-3 text-sm font-bold shadow-lg shadow-sky-500/25 flex items-center gap-2 whitespace-nowrap"
-        >
-          <span>Open SME Review Workspace (F6)</span>
-          <ArrowRight className="w-4 h-4" />
-        </button>
+          <button
+            onClick={() => onNavigateToSmeReview()}
+            className="btn btn-primary shadow-lg flex items-center gap-2 whitespace-nowrap"
+          >
+            <span>Open SME Review Workspace (F6)</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
-      {/* Metric Cards Row */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-        {/* Card 1: Case Risk Score */}
-        <div className="glass-panel p-5 relative overflow-hidden flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-400 font-medium">Case Risk Score (0-100)</span>
-            <span className={`badge ${getRiskBandBadge(riskBand)}`}>{riskBand} Risk</span>
+      {/* KPI Metrics Rail (4 Columns) */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Metric 1: Case Risk Score */}
+        <div className="sub flex flex-col justify-between">
+          <div className="sub-h">
+            <b>Case Risk Score</b>
+            <span className={getRiskPip(riskBand)}>{riskBand}</span>
           </div>
 
-          <div className="my-3 flex items-baseline gap-2">
-            <span className="text-4xl font-extrabold text-white tracking-tight">{caseScore}</span>
-            <span className="text-xs text-slate-500">/ 100 (Noisy-OR)</span>
+          <div className="my-2">
+            <div className="kpi-v text-[var(--ink)]">{caseScore} <span className="text-xs text-[var(--ink-3)] font-mono font-normal">/ 100</span></div>
+            <div className="kpi-s">Noisy-OR Risk Aggregation</div>
           </div>
 
-          <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-500 ${
-                caseScore >= 75 ? 'bg-rose-500' : caseScore >= 50 ? 'bg-orange-500' : caseScore >= 25 ? 'bg-amber-500' : 'bg-emerald-500'
-              }`}
-              style={{ width: `${caseScore}%` }}
+          <div className="meter-bar mt-2">
+            <i
+              className="transition-all duration-500"
+              style={{
+                width: `${caseScore}%`,
+                background: caseScore >= 75 ? 'var(--rose)' : caseScore >= 50 ? 'var(--amber)' : 'var(--signal)'
+              }}
             />
           </div>
           {caseScore >= 75 && (
-            <p className="text-[11px] text-rose-400 mt-2 font-medium flex items-center gap-1">
+            <div className="text-[11px] text-[var(--rose)] mt-2 font-mono flex items-center gap-1 font-semibold">
               <ShieldAlert className="w-3.5 h-3.5" /> Enforced floor (Critical gap present)
-            </p>
+            </div>
           )}
         </div>
 
-        {/* Card 2: Total Quantified Exposure */}
-        <div className="glass-panel p-5 flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-400 font-medium">Total Quantified Exposure</span>
-            <DollarSign className="w-4 h-4 text-rose-400" />
+        {/* Metric 2: Total Exposure */}
+        <div className="sub flex flex-col justify-between">
+          <div className="sub-h">
+            <b>Total Quantified Exposure</b>
+            <DollarSign className="w-4 h-4 text-[var(--rose)]" />
           </div>
 
-          <div className="my-3">
-            <div className="text-3xl font-extrabold text-white tracking-tight">
-              ${(totalExpectedLoss / 1000).toFixed(0)}k
-            </div>
-            <div className="text-[11px] text-slate-400 mt-0.5">Expected Loss ($EL = p \times E$)</div>
+          <div className="my-2">
+            <div className="kpi-v text-[var(--rose)]">${(totalExpectedLoss / 1000).toFixed(0)}k</div>
+            <div className="kpi-s">Expected Loss ($EL = p \times E$)</div>
           </div>
 
-          <div className="text-xs text-slate-500 border-t border-slate-800 pt-2 flex justify-between">
+          <div className="text-xs text-[var(--ink-3)] border-t border-[var(--edge)] pt-2 flex justify-between font-mono">
             <span>Range: $250k – $1.4M</span>
-            <span className="text-rose-400">P90 Exposure</span>
+            <span className="text-[var(--rose)] font-semibold">P90 Exposure</span>
           </div>
         </div>
 
-        {/* Card 3: Reducible Risk */}
-        <div className="glass-panel p-5 flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-400 font-medium">Reducible Exposure</span>
-            <TrendingDown className="w-4 h-4 text-emerald-400" />
+        {/* Metric 3: Reducible Loss */}
+        <div className="sub flex flex-col justify-between">
+          <div className="sub-h">
+            <b>Reducible Exposure</b>
+            <TrendingDown className="w-4 h-4 text-[var(--good)]" />
           </div>
 
-          <div className="my-3">
-            <div className="text-3xl font-extrabold text-emerald-400 tracking-tight">
-              ${(reducibleLoss / 1000).toFixed(0)}k
-            </div>
-            <div className="text-[11px] text-slate-400 mt-0.5">Achievable via recommendations</div>
+          <div className="my-2">
+            <div className="kpi-v text-[var(--good)]">${(reducibleLoss / 1000).toFixed(0)}k</div>
+            <div className="kpi-s">Achievable via recommendations</div>
           </div>
 
-          <div className="text-xs text-emerald-400 border-t border-slate-800 pt-2 flex items-center gap-1">
+          <div className="text-xs text-[var(--good)] border-t border-[var(--edge)] pt-2 flex items-center gap-1 font-mono">
             <CheckCircle2 className="w-3.5 h-3.5" /> 75% Expected Risk Reduction
           </div>
         </div>
 
-        {/* Card 4: Findings Count */}
-        <div className="glass-panel p-5 flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-400 font-medium">Active Findings</span>
-            <AlertCircle className="w-4 h-4 text-amber-400" />
+        {/* Metric 4: Findings Count */}
+        <div className="sub flex flex-col justify-between">
+          <div className="sub-h">
+            <b>Active Findings</b>
+            <AlertCircle className="w-4 h-4 text-[var(--amber)]" />
           </div>
 
-          <div className="my-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-white">{activeCase.findings.length}</span>
-            <span className="text-xs text-slate-400">Total Clause Gaps</span>
+          <div className="my-2 flex items-baseline gap-2">
+            <div className="kpi-v text-[var(--ink)]">{activeCase.findings.length}</div>
+            <div className="kpi-s">Clause Gaps</div>
           </div>
 
-          <div className="text-xs text-slate-400 border-t border-slate-800 pt-2 flex items-center justify-between">
-            <span className="text-rose-400 font-semibold">1 Critical</span>
-            <span className="text-orange-400 font-semibold">1 High</span>
-            <span className="text-amber-400 font-semibold">1 Medium</span>
+          <div className="text-xs border-t border-[var(--edge)] pt-2 flex items-center justify-between font-mono">
+            <span className="text-[var(--rose)] font-bold">1 Critical</span>
+            <span className="text-[var(--amber)] font-bold">1 High</span>
+            <span className="text-[var(--cyan)] font-bold">1 Medium</span>
           </div>
         </div>
       </div>
 
-      {/* Findings List */}
-      <div className="glass-panel p-6 space-y-5">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-          <h3 className="text-lg font-bold text-white flex items-center gap-2">
-            <ShieldAlert className="w-5 h-5 text-rose-400" />
-            Prioritized Findings & Recommendations ({activeCase.findings.length})
-          </h3>
-          <span className="text-xs text-slate-400">Ranked by Risk Reduction per Effort</span>
+      {/* Prioritized Findings Console Rows */}
+      <div className="sub space-y-4">
+        <div className="sub-h">
+          <b>Prioritized Findings & Quantified Recommendations ({activeCase.findings.length})</b>
+          <span>Ranked by Risk Reduction / Effort</span>
         </div>
 
-        <div className="space-y-4">
+        <div className="rows">
           {activeCase.findings.map((finding: Finding) => {
             const el = calculateFindingExpectedLoss(finding);
+            const rowClass = finding.severity === 'Critical' ? 'crit' : finding.severity === 'High' ? 'warn' : 'info';
             return (
               <div
                 key={finding.id}
-                className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition-all space-y-4"
+                className={`row ${rowClass} grid grid-cols-1 md:grid-cols-12 gap-3 p-4`}
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="flex items-center gap-3">
-                    <span className={`badge badge-${finding.severity.toLowerCase()}`}>
-                      {finding.severity} Severity
+                <div className="md:col-span-8 space-y-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`pip ${finding.severity === 'Critical' ? 'crit' : 'warn'}`}>
+                      {finding.severity} SEVERITY
                     </span>
-                    <span className="badge badge-blue">{finding.type}</span>
-                    <span className="text-xs font-mono text-slate-400">Finding ID: {finding.id}</span>
+                    <span className="pip info">{finding.type}</span>
+                    <span className="mono text-xs text-[var(--ink-3)]">ID: {finding.id}</span>
                   </div>
 
-                  <div className="flex items-center gap-4 text-xs">
-                    <span className="text-slate-400">
-                      Expected Loss: <span className="text-rose-400 font-bold">${(el.likely / 1000).toFixed(0)}k</span>
-                    </span>
-                    <span className="text-slate-400">
-                      Score: <span className="text-white font-bold">{finding.findingScore}/100</span>
-                    </span>
-                    <button
-                      onClick={() => onNavigateToSmeReview(finding.id)}
-                      className="btn btn-secondary py-1 px-3 text-xs text-sky-400 border-sky-500/30 hover:bg-sky-950/40"
-                    >
-                      Review & Simulate (F6)
-                    </button>
+                  <span className="rt">{finding.rationale}</span>
+                  
+                  <div className="flex items-center gap-2 text-[11px] text-[var(--ink-3)] font-mono pt-1">
+                    <span>Rule: <strong className="text-[var(--cyan)]">{finding.ruleIds.join(', ')}</strong></span>
+                    <span>•</span>
+                    <span>Pattern: <strong className="text-[var(--violet)]">{finding.patternIds.join(', ')}</strong></span>
+                    <span>•</span>
+                    <span>Confidence: <strong className="text-[var(--good)]">{(finding.confidence * 100).toFixed(0)}%</strong></span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                  {/* Left: Cited Rules & Rationale */}
-                  <div className="md:col-span-7 space-y-2">
-                    <div className="text-xs text-slate-300 font-medium">{finding.rationale}</div>
-                    <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                      <span>Cited Rule: <strong className="text-sky-400">{finding.ruleIds.join(', ')}</strong></span>
-                      <span>•</span>
-                      <span>Matched Pattern: <strong className="text-purple-400">{finding.patternIds.join(', ')}</strong></span>
-                      <span>•</span>
-                      <span>Confidence: <strong className="text-emerald-400">{(finding.confidence * 100).toFixed(0)}%</strong></span>
-                    </div>
+                <div className="md:col-span-4 flex flex-col justify-between items-end gap-2 text-right">
+                  <div>
+                    <div className="text-xs text-[var(--ink-2)]">Expected Loss:</div>
+                    <div className="mono text-lg font-bold text-[var(--rose)]">${(el.likely / 1000).toFixed(0)}k</div>
                   </div>
 
-                  {/* Right: Recommended Action & Proposed Text */}
-                  <div className="md:col-span-5 p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-bold text-sky-400 uppercase tracking-wider">
-                        Action: {finding.recommendationAction.toUpperCase()}
-                      </span>
-                      <span className="text-slate-500">Negotiation Effort: {finding.estimatedEffort}/5</span>
-                    </div>
-                    <p className="text-xs text-slate-300 font-mono leading-relaxed line-clamp-3">
-                      "{finding.proposedText}"
-                    </p>
-                  </div>
+                  <button
+                    onClick={() => onNavigateToSmeReview(finding.id)}
+                    className="btn btn-secondary py-1 px-3 text-xs"
+                  >
+                    Review & Simulate (F6)
+                  </button>
                 </div>
               </div>
             );
