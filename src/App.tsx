@@ -23,6 +23,7 @@ import { calculateCaseScoreAndBand } from './services/scoringEngine';
 export function App() {
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [currentRole, setCurrentRole] = useState<Role>('SME Reviewer');
+  const [viewMode, setViewMode] = useState<'executive' | 'tactical'>('executive');
   
   const [cases, setCases] = useState<CaseData[]>(initialCases);
   const [activeCaseId, setActiveCaseId] = useState<string>(initialCases[0].id);
@@ -34,7 +35,6 @@ export function App() {
 
   const activeCase = cases.find(c => c.id === activeCaseId) || cases[0];
 
-  // Helper to add lineage event
   const recordLineage = (action: string, objectRef: string, diff: string) => {
     const prevHash = lineageEvents[lineageEvents.length - 1]?.hash || '0000000000000000000000000000000000000000';
     const newHash = Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
@@ -52,7 +52,6 @@ export function App() {
     setLineageEvents(prev => [...prev, newEvt]);
   };
 
-  // Handlers
   const handleUpdateExtractedField = (fieldId: string, newValue: string) => {
     setCases(prevCases => prevCases.map(c => {
       if (c.id !== activeCase.id) return c;
@@ -65,7 +64,6 @@ export function App() {
   };
 
   const handleLaunchAnalysis = () => {
-    // Recompute scores
     const { caseScore, riskBand } = calculateCaseScoreAndBand(activeCase.findings);
     setCases(prevCases => prevCases.map(c => c.id === activeCase.id ? { ...c, riskScore: caseScore, riskBand, status: 'Analyzed' } : c));
     recordLineage('ANALYSIS_RUN_COMPLETED', activeCase.id, `Ran F4 analysis. Case risk score: ${caseScore}/100 (${riskBand})`);
@@ -125,7 +123,6 @@ export function App() {
     }));
     recordLineage('CASE_RATIFIED', decisionId, `Case ratified under ${tier}. Note: "${note}"`);
     
-    // Push candidate item to F8 learning queue
     const newPkg: LearningPackage = {
       id: `PKG-${Math.floor(Math.random() * 900 + 100)}`,
       sourceDecisionId: decisionId,
@@ -157,7 +154,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070c14] text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-[#080c14] text-slate-100 flex flex-col">
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -166,15 +163,19 @@ export function App() {
         activeCase={activeCase}
         cases={cases}
         setActiveCaseId={setActiveCaseId}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
       />
 
       <main className="flex-1 pb-12">
         {activeTab === 'dashboard' && (
           <AnalysisDashboard
             activeCase={activeCase}
+            viewMode={viewMode}
             onNavigateToSmeReview={(findingId) => {
               setActiveTab('sme-review');
             }}
+            onNavigateToReports={() => setActiveTab('reports')}
           />
         )}
 
